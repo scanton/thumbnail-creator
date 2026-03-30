@@ -69,8 +69,7 @@ export async function uploadThumbnail(
   const blob = await put(filename, body, {
     access: "public",
     contentType,
-    addRandomSuffix: false,
-    allowOverwrite: true,
+    addRandomSuffix: false, // fixed filename → overwrites existing blob at same path
   });
 
   return blob.url;
