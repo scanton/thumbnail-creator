@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Unit & Component Tests
+    runs-on: ubuntu-latest
+    env:
+      # Required by storage.ts module-load validation
+      BLOB_READ_WRITE_TOKEN: ci-placeholder-token
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Run unit and component tests
+        run: bun run test
+
+  build:
+    name: Next.js Build
+    runs-on: ubuntu-latest
+    env:
+      BLOB_READ_WRITE_TOKEN: ci-placeholder-token
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Build
+        run: bun run build
+
+  e2e:
+    name: E2E Tests (nightly)
+    runs-on: ubuntu-latest
+    # Only run E2E when XAI_TEST_API_KEY is available (set as a repo secret)
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
+    env:
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+      XAI_TEST_API_KEY: ${{ secrets.XAI_TEST_API_KEY }}
+      BASE_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: bun run test:e2e
