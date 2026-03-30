@@ -7,11 +7,10 @@
  * Pipeline:
  *   1. Validate inputs (tag, model, api key, prompt template)
  *   2. Sanitize tag → filename
- *   3. Idempotency check: if thumbnail already exists in Blob, return it
- *   4. Call xAI image generation API (45s sub-budget)
- *   5. Download image (URL) or decode base64 (b64_json)
- *   6. Upload to Vercel Blob (1 retry on failure)
- *   7. Return { url, tag, filename }
+ *   3. Call xAI image generation API (45s sub-budget)
+ *   4. Download image (URL) or decode base64 (b64_json)
+ *   5. Upload to Vercel Blob (1 retry on failure)
+ *   6. Return { url, tag, filename }
  *
  * All errors return: { error: string, code: string, tag?: string, tempUrl?: string }
  */
@@ -20,7 +19,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createXaiClient, XaiApiError } from "@/lib/xai";
 import { sanitizeTag } from "@/lib/sanitize";
-import { headThumbnail, uploadThumbnail } from "@/lib/storage";
+import { uploadThumbnail } from "@/lib/storage";
 
 // Serverless function timeout — requires Vercel Pro plan.
 // Hobby plan silently ignores values above 10s.
@@ -88,16 +87,9 @@ export async function POST(request: NextRequest) {
   const filename = `thumbnail_${sanitizedTag}.png`;
   const prompt = promptTemplate.replace("{tag}", sanitizedTag);
 
-  // ── 5. Idempotency check ──────────────────────────────────────────────────
-  // If this thumbnail was already generated, return the existing URL.
-  // This avoids duplicate xAI calls (and charges) if the function retried or
-  // the user re-submits the same tag.
-  const existingUrl = await headThumbnail(filename);
-  if (existingUrl) {
-    return NextResponse.json({ url: existingUrl, tag: sanitizedTag, filename });
-  }
-
-  // ── 6. Generate image via xAI ─────────────────────────────────────────────
+  // ── 5. Generate image via xAI ─────────────────────────────────────────────
+  // Always regenerate — no idempotency check. Lets users re-run with a new
+  // prompt and overwrite the previous result for the same tag.
   const xai = createXaiClient(apiKey);
   let tempUrl: string | undefined;
 
@@ -175,7 +167,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── 7. Upload to Vercel Blob (1 retry on failure) ─────────────────────────
+  // ── 6. Upload to Vercel Blob (1 retry on failure) ─────────────────────────
   const source = imageResult.type === "url" ? imageResult.url : imageResult.data;
   let blobUrl: string;
 
