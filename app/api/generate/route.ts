@@ -33,7 +33,7 @@ const RequestBodySchema = z.object({
     .string()
     .optional()
     .default(
-      "A clean, professional thumbnail image representing the concept: {tag}. Square composition, centered subject, simple background."
+      "Vibrant thumbnail image for the concept: {tag}. Subject fills the entire frame edge to edge — no whitespace or padding. Dynamic composition, bold colors, editorial photography style. Authentic and energetic, not corporate stock photo."
     ),
 });
 
