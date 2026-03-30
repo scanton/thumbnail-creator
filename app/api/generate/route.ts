@@ -7,11 +7,10 @@
  * Pipeline:
  *   1. Validate inputs (tag, model, api key, prompt template)
  *   2. Sanitize tag → filename
- *   3. Idempotency check: if thumbnail already exists in Blob, return it
- *   4. Call xAI image generation API (45s sub-budget)
- *   5. Download image (URL) or decode base64 (b64_json)
- *   6. Upload to Vercel Blob (1 retry on failure)
- *   7. Return { url, tag, filename }
+ *   3. Call xAI image generation API (45s sub-budget)
+ *   4. Download image (URL) or decode base64 (b64_json)
+ *   5. Upload to Vercel Blob (1 retry on failure)
+ *   6. Return { url, tag, filename }
  *
  * All errors return: { error: string, code: string, tag?: string, tempUrl?: string }
  */
@@ -33,7 +32,7 @@ const RequestBodySchema = z.object({
     .string()
     .optional()
     .default(
-      "Vibrant thumbnail image for the concept: {tag}. Subject fills the entire frame edge to edge — no whitespace or padding. Dynamic composition, bold colors, editorial photography style. Authentic and energetic, not corporate stock photo."
+      "Vibrant thumbnail image for the concept: {tag}. Subject fills the entire frame edge to edge — no whitespace or padding. Dynamic composition, bold colors, editorial photography style. Authentic and energetic, not corporate stock photo. No text, no words, no letters, no typography."
     ),
 });
 
