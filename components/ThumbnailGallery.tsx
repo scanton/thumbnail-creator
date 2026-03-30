@@ -63,6 +63,12 @@ function errorMessage(code?: string, fallback?: string): string {
       return "Tag was empty after cleaning — skipped";
     case "XAI_TIMEOUT":
       return "Generation timed out — try again";
+    case "INVALID_REQUEST":
+      return "Invalid request — check your prompt and try again";
+    case "MISSING_API_KEY":
+      return "API key required — enter your xAI key above";
+    case "INVALID_PROMPT_TEMPLATE":
+      return "Prompt template is invalid — reset it and try again";
     default:
       return fallback ?? "Generation failed — try again";
   }

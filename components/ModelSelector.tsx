@@ -35,6 +35,7 @@ export default function ModelSelector({
   const id = useId();
   const [models, setModels] = useState<XaiModel[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!apiKey) {
@@ -75,7 +76,7 @@ export default function ModelSelector({
     return () => {
       cancelled = true;
     };
-  }, [apiKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [apiKey, retryCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disabled = !apiKey || status === "loading";
 
@@ -90,13 +91,7 @@ export default function ModelSelector({
           Could not load models — check your API key.{" "}
           <button
             type="button"
-            onClick={() => {
-              // Trigger re-fetch by resetting status (useEffect watches apiKey)
-              setStatus("idle");
-              // Small trick: temporarily change a dep to force re-run
-              const event = new Event("retry-models");
-              window.dispatchEvent(event);
-            }}
+            onClick={() => setRetryCount((c) => c + 1)}
             className="underline hover:no-underline inline-flex items-center gap-1"
           >
             <RefreshCw size={12} /> Retry
