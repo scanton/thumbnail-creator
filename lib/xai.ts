@@ -26,9 +26,12 @@ const XaiModelSchema = z.object({
     .optional(),
 });
 
-const XaiModelsResponseSchema = z.object({
-  data: z.array(XaiModelSchema),
-});
+// xAI /v1/image-generation-models returns { models: [...] } (not { data: [...] }).
+// Accept both shapes so tests (which use the OpenAI-compat mock) and prod both work.
+const XaiModelsResponseSchema = z.union([
+  z.object({ models: z.array(XaiModelSchema) }),
+  z.object({ data: z.array(XaiModelSchema) }),
+]);
 
 const XaiImageDataSchema = z.union([
   // xAI can return either a temporary URL or base64-encoded image data
@@ -79,8 +82,16 @@ export function createXaiClient(apiKey: string) {
     }
 
     const json = await response.json();
-    const parsed = XaiModelsResponseSchema.parse(json);
-    return parsed.data.map((m) => ({ id: m.id, pricing: m.pricing }));
+    let parsed: z.infer<typeof XaiModelsResponseSchema>;
+    try {
+      parsed = XaiModelsResponseSchema.parse(json);
+    } catch (err) {
+      // Log the actual response shape to help diagnose API shape mismatches
+      console.error("[xai] listModels: unexpected response shape", JSON.stringify(json));
+      throw err;
+    }
+    const models = "models" in parsed ? parsed.models : parsed.data;
+    return models.map((m) => ({ id: m.id, pricing: m.pricing }));
   }
 
   /**
