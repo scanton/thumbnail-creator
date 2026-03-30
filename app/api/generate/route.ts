@@ -140,6 +140,11 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+      // Log the full xAI error body so unexpected status codes are diagnosable
+      console.error(
+        `[/api/generate] xAI returned ${error.status} for tag "${sanitizedTag}" model "${model}":`,
+        error.body
+      );
       return NextResponse.json(
         {
           error: `xAI generation failed: ${error.status}`,

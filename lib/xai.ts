@@ -120,8 +120,8 @@ export function createXaiClient(apiKey: string) {
           model,
           prompt,
           n: 1,
-          response_format: "url", // prefer URL; xAI may return b64_json regardless
-          size: "1024x1024",
+          // xAI image API does not support response_format or size params
+          // (unlike OpenAI); omitting them avoids 400 errors
         }),
       });
     } finally {
